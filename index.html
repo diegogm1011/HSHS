@@ -327,7 +327,7 @@ const RESOURCES = [
   // ── SHELTER ─────────────────────────────────────────────────────────────────
   {
     name: "Pine Street Inn – Emergency Shelter",
-    address: "444 Harrison Ave, Boston, MA 02118",
+    address: "Boston, MA",
     phone: "(617) 892-9100",
     website: "https://www.pinestreetinn.org/our-programs/emergency-services/emergency-shelter/",
     description: "Boston's largest emergency shelter providing beds, meals, and support services for single adults.",
@@ -344,12 +344,12 @@ const RESOURCES = [
     name: "Woods Mullen Shelter (Boston Public Health Commission)",
     address: "794 Massachusetts Ave, Boston, MA 02118",
     phone: "(617) 534-2900",
-    website: "https://www.boston.gov/departments/public-health-commission",
+    website: "https://www.bhchp.org/locations/woods-mullen-shelter/",
     description: "Low-barrier emergency shelter for women, operated by the City of Boston.",
     categories: ["shelter"],
     low_barrier: true,
     eligibility: {
-      gender: ["woman", "nonbinary"],
+      gender: ["woman"],
       min_age: 18,
       family_status: ["single"],
     },
@@ -360,8 +360,8 @@ const RESOURCES = [
     address: "889 Harrison Ave, Boston, MA 02118",
     phone: "(617) 442-9322",
     website: "https://www.rosiesplace.org",
-    description: "Sanctuary and emergency shelter exclusively for women (cisgender and transgender), with meals and wrap-around services.",
-    categories: ["shelter", "food"],
+    description: "Emergency day shelter and 20 overnight beds for women (cisgender and transgender). They provide access to a mailing address, phones, computers, showers, lockers, and clean clothes",
+    categories: ["shelter", "food", "mailing address"],
     low_barrier: true,
     eligibility: {
       gender: ["woman", "nonbinary"],
