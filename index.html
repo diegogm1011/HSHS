@@ -1337,7 +1337,7 @@ function renderResults(client, resources) {
   countEl.textContent = `${resources.length} resource${resources.length !== 1 ? "s" : ""} found`;
 
   // Client summary line
-  const genderLabel = { male: "man", female: "woman", nonbinary: "Non-binary", transgender: "Transgender" };
+  const genderLabel = { man: "man", woman: "woman", nonbinary: "Non-binary", transgender: "Transgender" };
   const familyLabel = { single: "Single adult", family: "Adult with children", youth: "Youth (under 25)" };
   const parts = [
     `Age ${client.age}`,
