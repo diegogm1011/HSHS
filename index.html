@@ -1212,6 +1212,68 @@ const RESOURCES = [
     },
     badges: ["low-barrier", "family"],
   },
+
+  // ── BOSTON.GOV HOUSING SERVICES ───────────────────────────────────────────────
+  {
+    name: "Southampton Street Shelter (BPHC – Men's)",
+    address: "112 Southampton St, Boston, MA 02118",
+    phone: "(617) 534-6100",
+    website: "https://www.boston.gov/government/cabinets/boston-public-health-commission/homeless-services",
+    description: "24/7 low-barrier emergency shelter for men 18+, operated by the Boston Public Health Commission. Capacity of 400. Includes meals, clothing, lockers, BHCHP health clinic, case management, housing placement, and substance use referrals. Amnesty for nonviolent restrictions when temps drop below 32°F.",
+    categories: ["shelter", "health"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Office of Housing Stability (City of Boston)",
+    address: "City Hall, Boston, MA 02201",
+    phone: "(617) 635-4200",
+    website: "https://www.boston.gov/departments/housing/office-housing-stability",
+    description: "City of Boston office helping residents facing eviction or housing crisis. Housing Crisis Case Coordinators assist with the eviction process, legal aid, financial help, and referrals. Mon–Fri 9 AM–5 PM. Call BOS:311 after hours.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Heading Home",
+    address: "105 Chauncy St, Boston, MA 02111",
+    phone: "(617) 864-8140",
+    website: "https://www.headinghome.org",
+    description: "Provides emergency shelter, transitional housing, and permanent supportive housing for individuals and families. Offers economic mobility coaching, case management, and a 95% housing retention rate. One of the key providers in Boston's Continuum of Care.",
+    categories: ["shelter", "family"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "BPHC Homeless Services – Provider Referral Line",
+    address: "Boston, MA",
+    phone: "(617) 534-4440",
+    website: "https://www.boston.gov/government/cabinets/boston-public-health-commission/homeless-services",
+    description: "For case managers and providers seeking shelter referrals on behalf of clients. Call to connect clients to BPHC emergency shelter and services.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
 ];
 
 // ─── CATEGORY CONFIG ──────────────────────────────────────────────────────────
