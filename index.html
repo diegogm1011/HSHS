@@ -1,1 +1,1434 @@
-placeholder - reading file next
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boston & Cambridge Homeless Resource Finder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a4a7a;
+      color: white;
+      padding: 1.25rem 2rem;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header p  { font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem; }
+
+    .container {
+      max-width: 860px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    /* FORM */
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a4a7a;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem 1.5rem;
+    }
+    @media (max-width: 580px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .field.full { grid-column: 1 / -1; }
+
+    label { font-size: 0.82rem; font-weight: 600; color: #4a5568; }
+
+    select, input[type="number"] {
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      background: white;
+      color: #1a202c;
+      transition: border-color 0.15s;
+    }
+    select:focus, input[type="number"]:focus {
+      outline: none;
+      border-color: #1a4a7a;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.25rem;
+    }
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 400;
+      font-size: 0.88rem;
+      color: #2d3748;
+      cursor: pointer;
+    }
+    .checkbox-group input[type="checkbox"] { cursor: pointer; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.7rem 2rem;
+      background: #1a4a7a;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #153d66; }
+    .btn-row { margin-top: 1.25rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .btn-secondary {
+      background: transparent;
+      color: #4a5568;
+      border: 1.5px solid #cbd5e0;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.88rem;
+    }
+    .btn-secondary:hover { background: #f7fafc; }
+
+    /* RESULTS */
+    #results { display: none; }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .results-header h2 { font-size: 1.1rem; font-weight: 700; color: #1a4a7a; }
+    .results-count {
+      font-size: 0.85rem;
+      background: #ebf4ff;
+      color: #1a4a7a;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .category-section { margin-bottom: 1.5rem; }
+    .category-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #718096;
+      margin-bottom: 0.6rem;
+    }
+
+    .resource-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.65rem;
+      border-left: 4px solid #1a4a7a;
+    }
+    .resource-card.food      { border-left-color: #38a169; }
+    .resource-card.health    { border-left-color: #805ad5; }
+    .resource-card.mental    { border-left-color: #d69e2e; }
+    .resource-card.substance { border-left-color: #e53e3e; }
+    .resource-card.veterans  { border-left-color: #2b6cb0; }
+    .resource-card.youth     { border-left-color: #e8792a; }
+    .resource-card.family    { border-left-color: #319795; }
+
+    .resource-name {
+      font-size: 0.97rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 0.2rem;
+    }
+    .resource-desc {
+      font-size: 0.83rem;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+      line-height: 1.45;
+    }
+    .resource-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: #718096;
+    }
+    .resource-meta span::before { content: "• "; }
+    .resource-meta a { color: #1a4a7a; text-decoration: none; }
+    .resource-meta a:hover { text-decoration: underline; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      background: #e2e8f0;
+      color: #4a5568;
+      margin-right: 0.3rem;
+    }
+    .badge.low-barrier { background: #c6f6d5; color: #276749; }
+    .badge.sobriety    { background: #fed7d7; color: #9b2c2c; }
+    .badge.veteran     { background: #bee3f8; color: #2a69ac; }
+    .badge.women       { background: #feebc8; color: #9c4221; }
+    .badge.youth       { background: #fefcbf; color: #744210; }
+    .badge.family      { background: #e9d8fd; color: #553c9a; }
+
+    .no-results {
+      text-align: center;
+      padding: 2.5rem;
+      color: #718096;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .no-results p { margin-top: 0.5rem; font-size: 0.88rem; }
+
+    .client-summary {
+      background: #ebf8ff;
+      border: 1px solid #bee3f8;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.83rem;
+      color: #2c5282;
+      margin-bottom: 1rem;
+    }
+    .client-summary strong { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Boston &amp; Cambridge Homeless Resource Finder</h1>
+  <p>Enter client information to see a personalized list of available services.</p>
+</header>
+
+<div class="container">
+
+  <!-- INTAKE FORM -->
+  <div class="card" id="formSection">
+    <h2>Client Intake</h2>
+    <form id="clientForm">
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="age">Age</label>
+          <input type="number" id="age" min="0" max="120" placeholder="e.g. 34" required />
+        </div>
+
+        <div class="field">
+          <label for="gender">Gender</label>
+          <select id="gender" required>
+            <option value="">-- Select --</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="nonbinary">Non-binary / Gender non-conforming</option>
+            <option value="transgender">Transgender</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="veteran">Veteran status</label>
+          <select id="veteran">
+            <option value="no">Not a veteran</option>
+            <option value="yes">Veteran (U.S. military)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="familyStatus">Family / household situation</label>
+          <select id="familyStatus">
+            <option value="single">Single adult</option>
+            <option value="family">Adult with children</option>
+            <option value="youth">Unaccompanied youth (under 25)</option>
+          </select>
+        </div>
+
+        <div class="field full">
+          <label>Current needs (select all that apply)</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" value="shelter" /> Emergency shelter / housing</label>
+            <label><input type="checkbox" value="food" /> Food &amp; meals</label>
+            <label><input type="checkbox" value="health" /> Medical / health care</label>
+            <label><input type="checkbox" value="mental" /> Mental health services</label>
+            <label><input type="checkbox" value="substance" /> Substance use treatment</label>
+            <label><input type="checkbox" value="disability" /> Disability services</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="sobriety">Sobriety status</label>
+          <select id="sobriety">
+            <option value="sober">Currently sober / in recovery</option>
+            <option value="not_sober">Currently using substances</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="mentalHealth">Mental health diagnosis?</label>
+          <select id="mentalHealth">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn">Find Resources</button>
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="results-header">
+      <h2>Matched Resources</h2>
+      <span class="results-count" id="resultsCount"></span>
+    </div>
+    <div class="client-summary" id="clientSummary"></div>
+    <div id="resourceList"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── RESOURCE DATABASE ───────────────────────────────────────────────────────
+// Each resource has:
+//   categories: array of tags used to group/filter
+//   eligibility: rules for matching against client profile
+//   low_barrier: true = no sobriety requirement
+const RESOURCES = [
+
+  // ── SHELTER ─────────────────────────────────────────────────────────────────
+  {
+    name: "Pine Street Inn – Emergency Shelter",
+    address: "444 Harrison Ave, Boston, MA 02118",
+    phone: "(617) 892-9100",
+    website: "https://www.pinestreetinn.org",
+    description: "Boston's largest emergency shelter providing beds, meals, and support services for single adults.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Woods Mullen Shelter (Boston Public Health Commission)",
+    address: "794 Massachusetts Ave, Boston, MA 02118",
+    phone: "(617) 534-2900",
+    website: "https://www.boston.gov/departments/public-health-commission",
+    description: "Low-barrier emergency shelter for women, operated by the City of Boston.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier", "women"],
+  },
+  {
+    name: "Rosie's Place",
+    address: "889 Harrison Ave, Boston, MA 02118",
+    phone: "(617) 442-9322",
+    website: "https://www.rosiesplace.org",
+    description: "Sanctuary and emergency shelter exclusively for women (cisgender and transgender), with meals and wrap-around services.",
+    categories: ["shelter", "food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier", "women"],
+  },
+  {
+    name: "New England Center and Home for Veterans (NECHV)",
+    address: "17 Court St, Boston, MA 02108",
+    phone: "(617) 371-1800",
+    website: "https://www.nechv.org",
+    description: "Comprehensive shelter, housing, and support services specifically for veterans.",
+    categories: ["shelter", "veterans"],
+    low_barrier: false,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      veteran: true,
+      family_status: ["single"],
+    },
+    badges: ["veteran"],
+  },
+  {
+    name: "Veterans Transition House",
+    address: "Cambridge, MA",
+    phone: "(617) 661-0033",
+    website: "https://www.vth.org",
+    description: "Transitional housing and case management for homeless veterans in the greater Boston area.",
+    categories: ["shelter", "veterans"],
+    low_barrier: false,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      veteran: true,
+      family_status: ["single"],
+    },
+    badges: ["veteran"],
+  },
+  {
+    name: "Bridge Over Troubled Waters",
+    address: "47 West St, Boston, MA 02111",
+    phone: "(617) 423-9575",
+    website: "https://www.bridgeotw.org",
+    description: "Drop-in and street outreach services for youth experiencing homelessness, ages 14–24.",
+    categories: ["shelter", "health", "youth"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 14,
+      max_age: 24,
+      family_status: ["youth", "single"],
+    },
+    badges: ["low-barrier", "youth"],
+  },
+  {
+    name: "Covenant House New England",
+    address: "One Covenant House Way, Boston, MA 02119",
+    phone: "(617) 262-0090",
+    website: "https://www.covenanthousene.org",
+    description: "Emergency shelter, transitional housing, and support services for youth ages 18–21.",
+    categories: ["shelter", "youth"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      max_age: 21,
+      family_status: ["youth", "single"],
+    },
+    badges: ["low-barrier", "youth"],
+  },
+  {
+    name: "Horizons for Homeless Children",
+    address: "1580 Main St, Waltham, MA 02451",
+    phone: "(617) 421-9129",
+    website: "https://www.horizonsforhomelesschildren.org",
+    description: "Comprehensive services for families with young children experiencing homelessness, including play spaces and family support.",
+    categories: ["shelter", "family"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["family"],
+    },
+    badges: ["low-barrier", "family"],
+  },
+  {
+    name: "Family Aid Boston",
+    address: "Boston, MA",
+    phone: "(617) 542-7286",
+    website: "https://www.familyaidboston.org",
+    description: "Emergency shelter and housing stabilization services for families with children.",
+    categories: ["shelter", "family"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["family"],
+    },
+    badges: ["low-barrier", "family"],
+  },
+  {
+    name: "HomeStart (Rapid Re-housing)",
+    address: "105 Chauncy St, Suite 502, Boston, MA 02111",
+    phone: "(617) 542-4278",
+    website: "https://www.homestart.org",
+    description: "Rapid re-housing and housing stabilization services for individuals and families in Boston.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
+
+  // ── FOOD ────────────────────────────────────────────────────────────────────
+  {
+    name: "St. Francis House",
+    address: "39 Boylston St, Boston, MA 02116",
+    phone: "(617) 542-4211",
+    website: "https://www.stfrancishouse.org",
+    description: "Day shelter offering daily hot meals, clothing, showers, and case management for adults.",
+    categories: ["shelter", "food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Common Cathedral",
+    address: "609 Boylston St (Copley Square), Boston, MA 02116",
+    phone: "(617) 236-1006",
+    website: "https://www.ecclesia.org/commoncathedral",
+    description: "Outdoor worship and community for people experiencing homelessness, with meals every Sunday.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Haley House Soup Kitchen",
+    address: "23 Dartmouth St, Boston, MA 02116",
+    phone: "(617) 236-2342",
+    website: "https://www.haleyhouse.org",
+    description: "Free hot meals served Monday–Friday in the South End.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "First Church Cambridge – Community Lunch",
+    address: "11 Garden St, Cambridge, MA 02138",
+    phone: "(617) 547-2724",
+    website: "https://www.firstchurchcambridge.org",
+    description: "Free community lunch served weekly for anyone in need in Cambridge.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Margaret Fuller Neighborhood House",
+    address: "71 Cherry St, Cambridge, MA 02139",
+    phone: "(617) 547-2228",
+    website: "https://www.margaretfuller.org",
+    description: "Food pantry and community meals for Cambridge residents facing food insecurity.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+
+  // ── HEALTH ──────────────────────────────────────────────────────────────────
+  {
+    name: "Boston Health Care for the Homeless Program (BHCHP)",
+    address: "780 Albany St, Boston, MA 02118",
+    phone: "(617) 534-2772",
+    website: "https://www.bhchp.org",
+    description: "Comprehensive primary and specialty care for people experiencing homelessness, including street outreach teams and shelter clinics.",
+    categories: ["health", "mental", "substance"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Cambridge Health Alliance – Street Medicine Team",
+    address: "Cambridge & Somerville, MA",
+    phone: "(617) 665-1000",
+    website: "https://www.challiance.org",
+    description: "Mobile street medicine team providing primary care to unsheltered individuals in Cambridge and Somerville.",
+    categories: ["health"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Fenway Health",
+    address: "1340 Boylston St, Boston, MA 02215",
+    phone: "(617) 267-0900",
+    website: "https://www.fenwayhealth.org",
+    description: "LGBTQ-affirming primary care, mental health, and HIV services. Welcoming to all, with particular expertise serving LGBTQ individuals.",
+    categories: ["health", "mental"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+
+  // ── MENTAL HEALTH ───────────────────────────────────────────────────────────
+  {
+    name: "BHCHP – Behavioral Health Services",
+    address: "780 Albany St, Boston, MA 02118",
+    phone: "(617) 534-2772",
+    website: "https://www.bhchp.org/services/behavioral-health",
+    description: "Psychiatric care, counseling, and behavioral health services integrated into homeless health care.",
+    categories: ["mental"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      mental_health: true,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Dimock Community Health Center",
+    address: "55 Dimock St, Boston, MA 02119",
+    phone: "(617) 442-8800",
+    website: "https://www.dimock.org",
+    description: "Community health center in Roxbury offering mental health counseling, psychiatry, and substance use treatment.",
+    categories: ["health", "mental", "substance"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "South End Community Health Center",
+    address: "1601 Washington St, Boston, MA 02118",
+    phone: "(617) 425-2000",
+    website: "https://www.sechc.org",
+    description: "Sliding-scale primary care and behavioral health services, including mental health counseling.",
+    categories: ["health", "mental"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+
+  // ── SUBSTANCE USE ───────────────────────────────────────────────────────────
+  {
+    name: "HopeFound (formerly CASPAR) – Detox & Treatment",
+    address: "1035 Cambridge St, Cambridge, MA 02141",
+    phone: "(617) 661-3022",
+    website: "https://baycovehumanservices.org/caspar",
+    description: "Low-barrier detox, residential treatment, and outpatient substance use services based in Cambridge.",
+    categories: ["substance"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "AHOPE Needle Exchange (Boston Public Health Commission)",
+    address: "794 Massachusetts Ave, Boston, MA 02118",
+    phone: "(617) 534-2975",
+    website: "https://www.boston.gov/departments/public-health-commission/substance-use",
+    description: "Harm reduction services including needle exchange, naloxone distribution, and referrals to treatment.",
+    categories: ["substance", "health"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Gavin Foundation – Substance Use Treatment",
+    address: "Boston & South Boston, MA",
+    phone: "(617) 269-6417",
+    website: "https://www.gavinfoundation.org",
+    description: "Residential and outpatient substance use disorder treatment with a focus on community-based recovery.",
+    categories: ["substance"],
+    low_barrier: false,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: [],
+  },
+
+  // ── DISABILITY ──────────────────────────────────────────────────────────────
+  {
+    name: "Independent Living Center of the North Shore & Cape Ann",
+    address: "Boston area, MA",
+    phone: "(978) 741-0077",
+    website: "https://www.ilcnsca.org",
+    description: "Peer support, advocacy, and independent living services for people with disabilities experiencing homelessness.",
+    categories: ["disability"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      disability: true,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Massachusetts Rehabilitation Commission (MRC)",
+    address: "600 Washington St, Boston, MA 02111",
+    phone: "(617) 204-3600",
+    website: "https://www.mass.gov/mrc",
+    description: "Vocational rehabilitation, supported employment, and community living services for people with physical or cognitive disabilities.",
+    categories: ["disability"],
+    low_barrier: false,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 16,
+      disability: true,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: [],
+  },
+
+  // ── CAMBRIDGE SHELTERS (from Cambridge CoC) ──────────────────────────────────
+  {
+    name: "Emergency Services Center (CASPAR)",
+    address: "240 Albany St, Cambridge, MA 02139",
+    phone: "(617) 661-0600",
+    website: "https://www.hopefound.org",
+    description: "Emergency shelter for men and women in Cambridge. Call to inquire about bed availability. Drop-in showers available daily 9 AM–2 PM.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Transition Wellness Center",
+    address: "1575 Cambridge St, Cambridge, MA 02138",
+    phone: "(857) 270-8775",
+    website: "https://www.hopefound.org",
+    description: "Shelter for men and women. No walk-ins — call for referrals. Must have a history of living or receiving services in Cambridge.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Green Street Shelter",
+    address: "11-15 Green St, Cambridge, MA 02139",
+    phone: "(617) 714-4989",
+    website: "https://www.cambridgema.gov/services/homelessservices",
+    description: "Emergency shelter for men and women in Cambridge.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Salvation Army Shelter & Drop-In (Cambridge)",
+    address: "402 Massachusetts Ave, Cambridge, MA 02139",
+    phone: "(617) 547-3400",
+    website: "https://www.salvationarmyma.org",
+    description: "Emergency shelter for men (call for availability). Drop-in open daily 10 AM–2 PM with showers (M–F), meals, and services for all.",
+    categories: ["shelter", "food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "First Church Shelter (Cambridge)",
+    address: "Cambridge, MA",
+    phone: "(617) 661-1873",
+    website: "https://www.firstchurchcambridge.org",
+    description: "Emergency shelter for men. No walk-ins — call for referrals. Oversees shower service at University Lutheran Church (66 Winthrop St), Mon–Fri 9 AM–3:30 PM.",
+    categories: ["shelter"],
+    low_barrier: false,
+    eligibility: {
+      gender: ["male"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: [],
+  },
+  {
+    name: "St. Patrick's Shelter (Union Square)",
+    address: "Somerville, MA (near Cambridge)",
+    phone: "(617) 628-3015",
+    website: "https://www.cambridgema.gov/services/homelessservices",
+    description: "Emergency shelter for women only. No walk-ins — all referrals, including self-referrals, are done by calling the number.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier", "women"],
+  },
+  {
+    name: "Transition House (Domestic Violence Shelter)",
+    address: "Cambridge, MA (confidential location)",
+    phone: "(877) 785-2020",
+    website: "https://www.transitionhouse.org",
+    description: "Shelter and crisis intervention for individuals fleeing domestic violence. SafeLink is the MA statewide DV hotline. Call 857-777-6724 for crisis intervention and safety planning.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier", "women"],
+  },
+  {
+    name: "Cambridge Winter Warming Center",
+    address: "806 Massachusetts Ave (rear entrance), Cambridge, MA 02139",
+    phone: "(781) 375-5558",
+    website: "https://www.cambridgema.gov/services/homelessservices",
+    description: "Seasonal emergency shelter (December through April) for men and women. Walk-up only; line-up begins at 6:30 PM.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Harvard Square Homeless Shelter",
+    address: "Cambridge, MA (Harvard Square area)",
+    phone: "(888) 285-4038",
+    website: "https://hshshelter.org",
+    description: "Seasonal dry shelter for men and women (November 1–April 15; summer June–August). Sobriety required. Visit website for lottery information.",
+    categories: ["shelter"],
+    low_barrier: false,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["sobriety"],
+  },
+  {
+    name: "Y2Y Harvard Square (Youth Shelter)",
+    address: "Cambridge, MA (Harvard Square)",
+    phone: "(617) 864-0795",
+    website: "https://www.y2ynetwork.org/harvard-square",
+    description: "Seasonal shelter for youth ages 18–24 (October–April; summer June–August). Run by young volunteers. Visit website for lottery information.",
+    categories: ["shelter", "youth"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      max_age: 24,
+      family_status: ["youth", "single"],
+    },
+    badges: ["low-barrier", "youth"],
+  },
+
+  // ── CAMBRIDGE DAYTIME / DROP-IN ───────────────────────────────────────────────
+  {
+    name: "On the Rise",
+    address: "341 Broadway, Cambridge, MA 02139",
+    phone: "(617) 497-7968",
+    website: "https://www.ontherise.org",
+    description: "Daytime drop-in Mon–Fri 9 AM–1 PM for women and transgender/nonbinary individuals experiencing homelessness. Offers showers, laundry, and mail services.",
+    categories: ["shelter", "health"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier", "women"],
+  },
+  {
+    name: "Cambridge Women's Center",
+    address: "46 Pleasant St, Cambridge, MA 02139",
+    phone: "",
+    website: "https://www.cambridgewomenscenter.org",
+    description: "Drop-in center for women open Tuesday, Thursday, and Saturday from 1–6 PM. Peer support, resources, and community.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier", "women"],
+  },
+  {
+    name: "Youth on Fire (Fenway Health)",
+    address: "1 Church Street, Cambridge, MA 02138",
+    phone: "(617) 661-2508",
+    website: "https://www.fenwayhealth.org/youth-on-fire",
+    description: "Drop-in and health services for homeless youth. Open Mon/Wed/Fri 11 AM–5 PM; Thu by appointment. Street outreach in Harvard Square Wednesdays 3–4 PM.",
+    categories: ["shelter", "health", "youth"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 14,
+      max_age: 24,
+      family_status: ["youth", "single"],
+    },
+    badges: ["low-barrier", "youth"],
+  },
+  {
+    name: "Material Aid and Advocacy Program (MAAP)",
+    address: "5 Longfellow Park, Cambridge, MA 02138",
+    phone: "",
+    website: "https://www.maapma.org",
+    description: "Basic survival supplies, phone charging, meals, and snacks on Tuesdays and Thursdays from 9 AM–3 PM.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Friday Café (First Church Cambridge)",
+    address: "11 Garden St, Cambridge, MA 02138",
+    phone: "",
+    website: "https://www.firstchurchcambridge.org",
+    description: "Weekly drop-in every Friday 12–3 PM with lunch, clothing, and toiletries for people experiencing homelessness.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "The Outdoor Church of Cambridge",
+    address: "Cambridge, MA (Porter Square & Harvard/Central area)",
+    phone: "",
+    website: "https://www.theoutdoorchurch.org",
+    description: "Sunday worship at Porter Square 9–10:15 AM with coffee, donuts, and toiletries. Sunday afternoon walks 2:15–5 PM distributing meals, socks, and toiletries near Harvard and Central.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+
+  // ── CAMBRIDGE MEAL PROGRAMS ───────────────────────────────────────────────────
+  {
+    name: "Salvation Army – Daily Lunch",
+    address: "402 Massachusetts Ave, Cambridge, MA 02139",
+    phone: "(617) 547-3400",
+    website: "https://www.salvationarmyma.org",
+    description: "Free lunch served every day of the week at the Salvation Army drop-in, 11:30 AM–12:30 PM.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "First Parish Church – Tuesday Meals",
+    address: "3 Church St, Cambridge, MA 02138",
+    phone: "",
+    website: "https://www.firstparishcambridge.org",
+    description: "Free meals, coffee, fruit, and desserts every Tuesday from 3:30–6:30 PM.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Christ Church Cambridge – Thursday Meals",
+    address: "0 Garden St, Cambridge, MA 02138",
+    phone: "",
+    website: "https://www.cccambridge.org",
+    description: "Free bagged meals, soup, coffee, and desserts with a dine-in option every Thursday at 5 PM.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Hope Fellowship Church – Sunday Meals",
+    address: "16 Beech St, Cambridge, MA 02140",
+    phone: "",
+    website: "https://www.hopefellowship.net",
+    description: "Bagged meals distributed every Sunday from 4–5:30 PM.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Project Manna / Mass Ave Baptist Church",
+    address: "146 Hampshire St, Cambridge, MA 02139",
+    phone: "",
+    website: "https://www.cambridgema.gov",
+    description: "Free meal program every Monday from 1:30–2:30 PM.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Food Not Bombs Cambridge",
+    address: "1 Central Square, Carl Barron Plaza, Cambridge, MA 02139",
+    phone: "",
+    website: "https://www.foodnotbombs.net",
+    description: "Free vegan/vegetarian meals every Saturday from 1–3 PM at Carl Barron Plaza in Central Square.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Loaves and Fishes Meal Program",
+    address: "35 Magazine St, Cambridge, MA 02139",
+    phone: "",
+    website: "https://www.cambridgema.gov",
+    description: "Free community meal every Saturday at 5 PM.",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Faith Kitchen @ St. Bartholomew's",
+    address: "239 Harvard St, Cambridge, MA 02139",
+    phone: "",
+    website: "https://www.cambridgema.gov",
+    description: "Free meals on the 2nd and last Tuesdays of each month at 6:30 PM, and the 1st and 3rd Wednesdays at 5:30 PM (The Wednesday Meal).",
+    categories: ["food"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+
+  // ── CAMBRIDGE MENTAL HEALTH & CRISIS ─────────────────────────────────────────
+  {
+    name: "CHA Community Behavioral Health Center – 24hr Crisis Line",
+    address: "Cambridge Hospital, 1493 Cambridge St, Cambridge, MA 02139",
+    phone: "(833) 222-2030",
+    website: "https://www.challiance.org/services-programs/behavioral-health",
+    description: "24-hour mental health access and crisis line. Walk-in urgent behavioral health care at Cambridge Hospital (Cahill Building, 1st floor): Mon–Fri 8 AM–8 PM, Sat–Sun 9 AM–5:30 PM.",
+    categories: ["mental", "health"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+
+  // ── CAMBRIDGE HARM REDUCTION ──────────────────────────────────────────────────
+  {
+    name: "ACCESS Needle Exchange (AIDS Action Committee)",
+    address: "359 Green St, Cambridge, MA 02139",
+    phone: "",
+    website: "https://aac.org/programs-services/needle-exchange",
+    description: "Harm reduction services: needle exchange, Narcan, HIV/HCV/STI testing, weekly medical clinic, and walk-in behavioral health services.",
+    categories: ["substance", "health"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+
+  // ── CAMBRIDGE CASE MANAGEMENT & HOUSING ──────────────────────────────────────
+  {
+    name: "Cambridge Multiservice Center for the Homeless",
+    address: "Cambridge, MA",
+    phone: "(617) 349-6340",
+    website: "https://www.cambridgema.gov/services/homelessservices",
+    description: "Case management, housing referrals, and coordinated services for people experiencing homelessness in Cambridge. Open for walk-ins and appointments.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Cambridge Coordinated Access (C-CAN)",
+    address: "Cambridge, MA",
+    phone: "(617) 349-7715",
+    website: "https://www.cambridgema.gov/services/homelessservices",
+    description: "Housing needs assessments for people currently homeless in Cambridge. Mobile assessors available in the field; in-person Tuesdays and Thursdays 1–4 PM at the Multi-Service Center.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Cambridge Housing Authority",
+    address: "362 Green St, Cambridge, MA 02139",
+    phone: "(617) 864-3020",
+    website: "https://www.cambridgehousing.org",
+    description: "Public housing authority offering affordable housing and Section 8 vouchers. Open Mon–Fri 8:30 AM–5 PM. Appointments strongly encouraged.",
+    categories: ["shelter"],
+    low_barrier: false,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: [],
+  },
+  {
+    name: "Cambridge Public Library – Social Work Team",
+    address: "449 Broadway, Cambridge, MA 02138",
+    phone: "(617) 349-4040",
+    website: "https://cambridgepl.libguides.com/socialservices",
+    description: "Library social workers available by appointment to connect patrons with housing, benefits, mental health, and other community resources.",
+    categories: ["health", "mental"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 0,
+      family_status: ["single", "family", "youth"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "EA / Family Emergency Shelter (State Program)",
+    address: "2201 Washington St, Boston (Roxbury) or 80 Everett Ave, Chelsea",
+    phone: "(866) 584-0653",
+    website: "https://www.mass.gov/guides/emergency-assistance-family-shelter-and-services",
+    description: "State Emergency Assistance (EA) family shelter program. Call to apply — no online application. Office hours Mon–Fri 8 AM–5 PM. For families with children.",
+    categories: ["shelter", "family"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["family"],
+    },
+    badges: ["low-barrier", "family"],
+  },
+
+  // ── BOSTON.GOV HOUSING SERVICES ───────────────────────────────────────────────
+  {
+    name: "Southampton Street Shelter (BPHC – Men's)",
+    address: "112 Southampton St, Boston, MA 02118",
+    phone: "(617) 534-6100",
+    website: "https://www.boston.gov/government/cabinets/boston-public-health-commission/homeless-services",
+    description: "24/7 low-barrier emergency shelter for men 18+, operated by the Boston Public Health Commission. Capacity of 400. Includes meals, clothing, lockers, BHCHP health clinic, case management, housing placement, and substance use referrals. Amnesty for nonviolent restrictions when temps drop below 32°F.",
+    categories: ["shelter", "health"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male"],
+      min_age: 18,
+      family_status: ["single"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Office of Housing Stability (City of Boston)",
+    address: "City Hall, Boston, MA 02201",
+    phone: "(617) 635-4200",
+    website: "https://www.boston.gov/departments/housing/office-housing-stability",
+    description: "City of Boston office helping residents facing eviction or housing crisis. Housing Crisis Case Coordinators assist with the eviction process, legal aid, financial help, and referrals. Mon–Fri 9 AM–5 PM. Call BOS:311 after hours.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "Heading Home",
+    address: "105 Chauncy St, Boston, MA 02111",
+    phone: "(617) 864-8140",
+    website: "https://www.headinghome.org",
+    description: "Provides emergency shelter, transitional housing, and permanent supportive housing for individuals and families. Offers economic mobility coaching, case management, and a 95% housing retention rate. One of the key providers in Boston's Continuum of Care.",
+    categories: ["shelter", "family"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
+  {
+    name: "BPHC Homeless Services – Provider Referral Line",
+    address: "Boston, MA",
+    phone: "(617) 534-4440",
+    website: "https://www.boston.gov/government/cabinets/boston-public-health-commission/homeless-services",
+    description: "For case managers and providers seeking shelter referrals on behalf of clients. Call to connect clients to BPHC emergency shelter and services.",
+    categories: ["shelter"],
+    low_barrier: true,
+    eligibility: {
+      gender: ["male", "female", "nonbinary", "transgender"],
+      min_age: 18,
+      family_status: ["single", "family"],
+    },
+    badges: ["low-barrier"],
+  },
+];
+
+// ─── CATEGORY CONFIG ──────────────────────────────────────────────────────────
+const CATEGORY_META = {
+  shelter:   { label: "Shelter & Housing",         color: "shelter"   },
+  food:      { label: "Food & Meals",               color: "food"      },
+  health:    { label: "Medical / Health Care",      color: "health"    },
+  mental:    { label: "Mental Health Services",     color: "mental"    },
+  substance: { label: "Substance Use Treatment",    color: "substance" },
+  disability:{ label: "Disability Services",        color: "health"    },
+  veterans:  { label: "Veterans Services",          color: "veterans"  },
+  youth:     { label: "Youth Services",             color: "youth"     },
+  family:    { label: "Family Services",            color: "family"    },
+};
+
+// ─── MATCHING LOGIC ───────────────────────────────────────────────────────────
+function matchResources(client) {
+  const matched = [];
+
+  for (const r of RESOURCES) {
+    const e = r.eligibility;
+
+    // Age
+    if (e.min_age !== undefined && client.age < e.min_age) continue;
+    if (e.max_age !== undefined && client.age > e.max_age) continue;
+
+    // Gender
+    if (e.gender && !e.gender.includes(client.gender)) continue;
+
+    // Veteran
+    if (e.veteran === true && client.veteran !== "yes") continue;
+
+    // Family status
+    if (e.family_status && !e.family_status.includes(client.familyStatus)) continue;
+
+    // Sobriety: skip places with sobriety requirement if client is not sober
+    if (!r.low_barrier && client.sobriety === "not_sober") continue;
+
+    // Needs filter: only include if this resource matches at least one selected need
+    // (or if client selected no needs, show everything eligible)
+    if (client.needs.length > 0) {
+      const overlap = r.categories.some(c => client.needs.includes(c));
+      if (!overlap) continue;
+    }
+
+    matched.push(r);
+  }
+
+  return matched;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderResults(client, resources) {
+  const resultsDiv = document.getElementById("results");
+  const listDiv    = document.getElementById("resourceList");
+  const countEl    = document.getElementById("resultsCount");
+  const summaryEl  = document.getElementById("clientSummary");
+
+  resultsDiv.style.display = "block";
+  resultsDiv.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  countEl.textContent = `${resources.length} resource${resources.length !== 1 ? "s" : ""} found`;
+
+  // Client summary line
+  const genderLabel = { male: "Male", female: "Female", nonbinary: "Non-binary", transgender: "Transgender" };
+  const familyLabel = { single: "Single adult", family: "Adult with children", youth: "Youth (under 25)" };
+  const parts = [
+    `Age ${client.age}`,
+    genderLabel[client.gender] || client.gender,
+    familyLabel[client.familyStatus],
+    client.veteran === "yes" ? "Veteran" : null,
+    client.sobriety === "not_sober" ? "Currently using substances" : "Sober / in recovery",
+    client.mentalHealth === "yes" ? "Mental health diagnosis" : null,
+  ].filter(Boolean);
+  summaryEl.innerHTML = `<strong>Client profile:</strong> ${parts.join(" &bull; ")}`;
+
+  if (resources.length === 0) {
+    listDiv.innerHTML = `
+      <div class="no-results">
+        <strong>No exact matches found.</strong>
+        <p>Try adjusting the client profile, or contact <a href="https://www.mass211.org" target="_blank">Mass 2-1-1</a> for broader assistance.</p>
+      </div>`;
+    return;
+  }
+
+  // Group by primary category (first category in the array)
+  // Determine which categories are represented among matched resources
+  const order = ["shelter", "food", "health", "mental", "substance", "disability", "veterans", "youth", "family"];
+  const grouped = {};
+  for (const r of resources) {
+    for (const cat of r.categories) {
+      if (!grouped[cat]) grouped[cat] = [];
+      if (!grouped[cat].includes(r)) grouped[cat].push(r);
+    }
+  }
+
+  let html = "";
+  const seen = new Set();
+  for (const cat of order) {
+    if (!grouped[cat]) continue;
+    const items = grouped[cat].filter(r => !seen.has(r.name));
+    if (items.length === 0) continue;
+    items.forEach(r => seen.add(r.name));
+
+    const meta = CATEGORY_META[cat];
+    html += `<div class="category-section">
+      <div class="category-title">${meta.label}</div>`;
+
+    for (const r of items) {
+      const badges = r.badges.map(b => `<span class="badge ${b}">${b.replace("-", " ")}</span>`).join("");
+      html += `
+        <div class="resource-card ${meta.color}">
+          <div class="resource-name">${r.name}</div>
+          <div style="margin-bottom:0.4rem">${badges}</div>
+          <div class="resource-desc">${r.description}</div>
+          <div class="resource-meta">
+            <span>${r.address}</span>
+            <span>${r.phone}</span>
+            <span><a href="${r.website}" target="_blank" rel="noopener">Website</a></span>
+          </div>
+        </div>`;
+    }
+    html += `</div>`;
+  }
+
+  listDiv.innerHTML = html;
+}
+
+// ─── FORM SUBMIT ──────────────────────────────────────────────────────────────
+document.getElementById("clientForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const age         = parseInt(document.getElementById("age").value, 10);
+  const gender      = document.getElementById("gender").value;
+  const veteran     = document.getElementById("veteran").value;
+  const familyStatus= document.getElementById("familyStatus").value;
+  const sobriety    = document.getElementById("sobriety").value;
+  const mentalHealth= document.getElementById("mentalHealth").value;
+
+  const needs = Array.from(
+    document.querySelectorAll(".checkbox-group input[type='checkbox']:checked")
+  ).map(cb => cb.value);
+
+  if (!gender) { alert("Please select a gender."); return; }
+  if (isNaN(age) || age < 0) { alert("Please enter a valid age."); return; }
+
+  const client = { age, gender, veteran, familyStatus, sobriety, mentalHealth, needs };
+  const matched = matchResources(client);
+  renderResults(client, matched);
+});
+
+function resetForm() {
+  document.getElementById("clientForm").reset();
+  document.getElementById("results").style.display = "none";
+}
+</script>
+</body>
+</html>
